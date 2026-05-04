@@ -1,4 +1,5 @@
 package org.example.inpostpointradar.service;
 
-public class SyncService {
+public interface SyncService {
+    void synchronizeAllPoints();
 }
