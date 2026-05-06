@@ -5,14 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.inpostpointradar.client.InPostClient;
 import org.example.inpostpointradar.client.dto.PointDto;
 import org.example.inpostpointradar.domain.Point;
+import org.example.inpostpointradar.domain.PointType;
 import org.example.inpostpointradar.repository.PointRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,39 +23,62 @@ public class SyncServiceImpl implements SyncService {
     @Override
     @Async
     public void synchronizeAllPoints() {
-        log.info("Rozpoczynanie pełnej synchronizacji punktów InPost...");
+        log.info("Starting InPost points synchronization...");
 
         inPostClient.fetchPoints(1, 100)
                 .subscribeOn(Schedulers.boundedElastic())
                 .subscribe(response -> {
-                    int totalPages = response.getTotalPages();
-                    log.info("Znaleziono {} stron do pobrania.", totalPages);
+                    int totalPages = response.totalPages();
+                    log.info("Found {} pages to fetch.", totalPages);
 
                     Flux.range(1, totalPages)
                             .flatMap(page -> inPostClient.fetchPoints(page, 100), 5)
                             .publishOn(Schedulers.boundedElastic())
                             .doOnNext(res -> {
-                                List<Point> entities = res.getItems().stream()
-                                        .map(this::mapToEntity)
-                                        .collect(Collectors.toList());
-                                pointRepository.saveAll(entities);
-                                log.info("Zapisano partię danych z InPost API.");
+                                if (res.items() != null) {
+                                    res.items().forEach(this::saveOrUpdate);
+                                }
                             })
-                            .subscribe();
-                }, error -> log.error("Błąd inicjalizacji: {}", error.getMessage()));
+                            .subscribe(
+                                    null,
+                                    err -> log.error("Error during page processing: {}", err.getMessage()),
+                                    () -> log.info("Full synchronization finished!")
+                            );
+                }, error -> log.error("Failed to initialize sync: {}", error.getMessage()));
     }
 
-    private Point mapToEntity(PointDto dto) {
-        return Point.builder()
-                .name(dto.getName())
-                .type(dto.getType() != null && !dto.getType().isEmpty()
-                        ? dto.getType().iterator().next() : "unknown")
-                .status(dto.getStatus())
-                .line1(dto.getAddressDetails() != null ? dto.getAddressDetails().getLine1() : null)
-                .line2(dto.getAddressDetails() != null ? dto.getAddressDetails().getLine2() : null)
-                .latitude(dto.getLocation() != null ? dto.getLocation().getLatitude() : null)
-                .longitude(dto.getLocation() != null ? dto.getLocation().getLongitude() : null)
-                .functions(dto.getFunctions())
-                .build();
+    private void saveOrUpdate(PointDto dto) {
+        try {
+            Point point = pointRepository.findByName(dto.name())
+                    .orElseGet(Point::new);
+
+            point.setName(dto.name());
+            point.setStatus(dto.status());
+            String typeValue = (dto.type() != null && !dto.type().isEmpty())
+                    ? dto.type().iterator().next()
+                    : "UNKNOWN";
+
+            point.setType(PointType.fromString(typeValue));
+
+            if (dto.addressDetails() != null) {
+                var addr = dto.addressDetails();
+                point.setCity(addr.city());
+                point.setPostCode(addr.postCode());
+
+                String street = addr.street() != null ? addr.street() : "";
+                String building = addr.buildingNumber() != null ? addr.buildingNumber() : "";
+                point.setStreet((street + " " + building).trim());
+            }
+
+            if (dto.location() != null) {
+                point.setLatitude(dto.location().latitude());
+                point.setLongitude(dto.location().longitude());
+            }
+
+            point.setFunctions(dto.functions());
+            pointRepository.save(point);
+        } catch (Exception e) {
+            log.warn("Skipping point {}: {}", dto.name(), e.getMessage());
+        }
     }
 }

@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-public class InPostWebClient implements InPostClient{
+public class InPostWebClient implements InPostClient {
 
     private final WebClient webClient;
 
@@ -16,7 +16,10 @@ public class InPostWebClient implements InPostClient{
         this.webClient = webClient;
     }
 
+    @Override
     public Mono<InPostResponse> fetchPoints(int page, int perPage) {
+        log.debug("Fetching points from InPost API - page: {}, perPage: {}", page, perPage);
+
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/points")
@@ -24,15 +27,9 @@ public class InPostWebClient implements InPostClient{
                         .queryParam("per_page", perPage)
                         .build())
                 .retrieve()
-                .onStatus(status -> status.isError(), response -> {
-                    log.error("InPost API returned error status: {}", response.statusCode());
-                    return Mono.error(new RuntimeException("InPost API Error: " + response.statusCode()));
-                })
                 .bodyToMono(InPostResponse.class)
-                .doOnNext(response -> log.info("Pobrano stronę {}/{} z InPost.", page, response.getTotalPages()))
-                .onErrorResume(e -> {
-                    log.error("Błąd podczas pobierania danych z InPost (Strona {}): {}", page, e.getMessage());
-                    return Mono.empty();
-                });
+                .doOnNext(response -> log.info("Successfully fetched page {} of {} from InPost", page, response.totalPages()))
+                .doOnError(e -> log.error("Critical error during InPost API call: {}", e.getMessage()))
+                .onErrorResume(e -> Mono.error(new RuntimeException("Failed to fetch InPost data", e)));
     }
 }

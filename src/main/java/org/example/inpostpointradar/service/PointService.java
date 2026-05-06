@@ -6,4 +6,8 @@ import java.util.List;
 public interface PointService {
     List<Point> getAllPoints();
     long getPointsCount();
+    List<Point> findByCity(String city);
+    long countPointsInCity(String city);
+    List<Point> getPointsByPostCode(String postCode);
+    long countPointsByPostCode(String postCode);
 }

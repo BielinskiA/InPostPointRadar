@@ -9,10 +9,9 @@ import java.util.Optional;
 
 @Repository
 public interface PointRepository extends JpaRepository<Point, Long> {
-
     Optional<Point> findByName(String name);
-
-    boolean existsByName(String name);
-
-    List<Point> findByLine2ContainingIgnoreCase(String city);
+    List<Point> findByCityContainingIgnoreCase(String city);
+    long countByCityContainingIgnoreCase(String city);
+    List<Point> findByPostCodeContainingIgnoreCase(String postCode);
+    long countByPostCodeContainingIgnoreCase(String postCode);
 }

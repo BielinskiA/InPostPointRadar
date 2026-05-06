@@ -14,11 +14,9 @@ public enum PointType {
     private final String value;
 
     public static PointType fromString(String text) {
-        for (PointType type : PointType.values()) {
-            if (type.value.equalsIgnoreCase(text)) {
-                return type;
-            }
-        }
-        return UNKNOWN;
+        return java.util.Arrays.stream(PointType.values())
+                .filter(type -> type.value.equalsIgnoreCase(text))
+                .findFirst()
+                .orElse(UNKNOWN);
     }
 }

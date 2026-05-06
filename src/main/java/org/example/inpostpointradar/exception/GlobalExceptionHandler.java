@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInPostApiException(InPostApiException ex, ServerHttpRequest request) {
         log.warn("InPost API Error: {}", ex.getMessage());
 
-        ErrorResponse error = new ErrorResponse(
+        var error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.BAD_GATEWAY.value(),
                 "Bad Gateway",
@@ -40,6 +40,6 @@ public class GlobalExceptionHandler {
                 request.getURI().getPath()
         );
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
     }
 }
