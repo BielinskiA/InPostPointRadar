@@ -47,7 +47,7 @@ public class SyncServiceImpl implements SyncService {
                 }, error -> log.error("Failed to initialize sync: {}", error.getMessage()));
     }
 
-    private void saveOrUpdate(PointDto dto) {
+    public void saveOrUpdate(PointDto dto) {
         try {
             Point point = pointRepository.findByName(dto.name())
                     .orElseGet(Point::new);

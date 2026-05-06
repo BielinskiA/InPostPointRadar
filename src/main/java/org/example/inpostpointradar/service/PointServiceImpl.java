@@ -40,4 +40,20 @@ public class PointServiceImpl implements PointService {
     public long countPointsByPostCode(String postCode) {
         return pointRepository.countByPostCodeContainingIgnoreCase(postCode);
     }
+    @Override
+    public List<Point> getPointsByCityAndStreet(String city, String street) {
+        return pointRepository.findByCityIgnoreCaseAndStreetContainingIgnoreCase(city, street);
+    }
+    @Override
+    public long countByCityAndStreet(String city, String street) {
+        return pointRepository.countByCityIgnoreCaseAndStreetContainingIgnoreCase(city, street);
+    }
+    @Override
+    public List<Point> getPointsByPostCodeAndStreet(String postCode, String street) {
+        return pointRepository.findByPostCodeIgnoreCaseAndStreetContainingIgnoreCase(postCode, street);
+    }
+    @Override
+    public long countByPostCodeAndStreet(String postCode, String street) {
+        return pointRepository.countByPostCodeIgnoreCaseAndStreetContainingIgnoreCase(postCode, street);
+    }
 }

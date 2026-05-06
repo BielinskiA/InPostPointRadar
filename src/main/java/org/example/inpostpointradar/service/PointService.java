@@ -10,4 +10,8 @@ public interface PointService {
     long countPointsInCity(String city);
     List<Point> getPointsByPostCode(String postCode);
     long countPointsByPostCode(String postCode);
+    List<Point> getPointsByCityAndStreet(String city, String street);
+    long countByCityAndStreet(String city, String street);
+    List<Point> getPointsByPostCodeAndStreet(String postCode, String street);
+    long countByPostCodeAndStreet(String postCode, String street);
 }

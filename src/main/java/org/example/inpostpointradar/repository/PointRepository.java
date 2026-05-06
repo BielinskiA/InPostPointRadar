@@ -14,4 +14,8 @@ public interface PointRepository extends JpaRepository<Point, Long> {
     long countByCityContainingIgnoreCase(String city);
     List<Point> findByPostCodeContainingIgnoreCase(String postCode);
     long countByPostCodeContainingIgnoreCase(String postCode);
+    List<Point> findByCityIgnoreCaseAndStreetContainingIgnoreCase(String city, String street);
+    long countByCityIgnoreCaseAndStreetContainingIgnoreCase(String city, String street);
+    List<Point> findByPostCodeIgnoreCaseAndStreetContainingIgnoreCase(String postCode, String street);
+    long countByPostCodeIgnoreCaseAndStreetContainingIgnoreCase(String postCode, String street);
 }
